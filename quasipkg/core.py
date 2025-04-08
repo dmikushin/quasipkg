@@ -12,9 +12,38 @@ from pathlib import Path
 class QuasiPackageCreator:
     """Creates dummy/placeholder packages for pacman"""
 
-    def __init__(self, args):
-        """Initialize with parsed arguments"""
-        self.args = args
+    def __init__(self, args=None, **kwargs):
+        """
+        Initialize with either parsed arguments or individual parameters
+
+        Args:
+            args: Argument object from argparse (optional)
+            **kwargs: Individual parameters (used if args is None)
+        """
+        if args is not None:
+            self.name = args.name
+            self.pkgversion = args.pkgversion
+            self.release = args.release
+            self.description = args.description
+            self.provides = args.provides
+            self.conflicts = args.conflicts
+            self.arch = args.arch
+            self.license = args.license
+            self.url = args.url
+            self.output_dir = args.output_dir
+            self.install = args.install
+        else:
+            self.name = kwargs.get('name')
+            self.pkgversion = kwargs.get('version', '1.0')
+            self.release = kwargs.get('release', '1')
+            self.description = kwargs.get('description', 'Dummy placeholder package')
+            self.provides = kwargs.get('provides')
+            self.conflicts = kwargs.get('conflicts')
+            self.arch = kwargs.get('arch', 'any')
+            self.license = kwargs.get('license', 'GPL')
+            self.url = kwargs.get('url', 'https://example.com')
+            self.output_dir = kwargs.get('output_dir')
+            self.install = kwargs.get('install', False)
 
     def _format_array(self, items_str):
         """Format a comma-separated string into a PKGBUILD array format"""
@@ -27,19 +56,19 @@ class QuasiPackageCreator:
     def create_pkgbuild(self):
         """Create PKGBUILD file for the dummy package"""
         # Set up package name and paths
-        pkg_name = self.args.name
+        pkg_name = self.name
         pkg_name_dummy = f"{pkg_name}"
 
         # Set default output directory if not specified
-        output_dir = self.args.output_dir or pkg_name_dummy
+        output_dir = self.output_dir or pkg_name_dummy
         output_path = Path(output_dir)
 
         # Create output directory
         output_path.mkdir(exist_ok=True, parents=True)
 
         # Set default provides/conflicts if not specified
-        provides = self.args.provides or pkg_name
-        conflicts = self.args.conflicts or pkg_name
+        provides = self.provides or pkg_name
+        conflicts = self.conflicts or pkg_name
 
         # Format for PKGBUILD
         provides_array = self._format_array(provides)
@@ -50,12 +79,12 @@ class QuasiPackageCreator:
 # Maintainer: quasipkg <quasipkg@example.com>
 
 pkgname={pkg_name_dummy}
-pkgver={self.args.pkgversion}
-pkgrel={self.args.release}
-pkgdesc="{self.args.description}"
-arch=('{self.args.arch}')
-url="{self.args.url}"
-license=('{self.args.license}')
+pkgver={self.pkgversion}
+pkgrel={self.release}
+pkgdesc="{self.description}"
+arch=('{self.arch}')
+url="{self.url}"
+license=('{self.license}')
 provides=({provides_array})
 conflicts=({conflicts_array})
 
@@ -96,7 +125,7 @@ EOL
                 subprocess.run(["makepkg", "-f"], check=True)
 
             # Install if requested
-            if self.args.install:
+            if self.install:
                 print("Installing package...")
                 # Find the built package
                 pkg_files = list(Path('.').glob('*.pkg.tar.zst'))
@@ -122,3 +151,47 @@ EOL
             print(f"Error: {str(e)}", file=sys.stderr)
             os.chdir(current_dir)
             return False
+
+
+def create_package(name, version="1.0", release="1", description="Dummy placeholder package",
+                provides=None, conflicts=None, arch="any", license="GPL",
+                url="https://example.com", output_dir=None, install=False):
+    """
+    Create a dummy package with the given parameters.
+
+    Args:
+        name (str): Package name
+        version (str, optional): Package version. Defaults to "1.0".
+        release (str, optional): Package release number. Defaults to "1".
+        description (str, optional): Package description. Defaults to "Dummy placeholder package".
+        provides (str, optional): Package names this dummy provides (comma-separated). Defaults to name.
+        conflicts (str, optional): Package names this dummy conflicts with (comma-separated). Defaults to name.
+        arch (str, optional): Package architecture. Defaults to "any".
+        license (str, optional): Package license. Defaults to "GPL".
+        url (str, optional): Package URL. Defaults to "https://example.com".
+        output_dir (str, optional): Directory to create package in. Defaults to ./NAME.
+        install (bool, optional): Also install the package after building. Defaults to False.
+
+    Returns:
+        Path: Path to the created package directory
+        bool: True if the package was built successfully, False otherwise
+    """
+    # Create and build the package - pass parameters directly
+    creator = QuasiPackageCreator(
+        name=name,
+        version=version,
+        release=release,
+        description=description,
+        provides=provides,
+        conflicts=conflicts,
+        arch=arch,
+        license=license,
+        url=url,
+        output_dir=output_dir,
+        install=install
+    )
+
+    output_path = creator.create_pkgbuild()
+    success = creator.build_package(output_path)
+
+    return output_path, success

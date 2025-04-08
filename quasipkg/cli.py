@@ -20,7 +20,7 @@ Examples:
 ''')
 
     parser.add_argument('--name', required=True, help='Package name (required)')
-    parser.add_argument('--pkgversion', default='1.0', help='Package version (default: 1.0)')
+    parser.add_argument('--version', dest='pkgversion', default='1.0', help='Package version (default: 1.0)')
     parser.add_argument('--release', default='1', help='Package release number (default: 1)')
     parser.add_argument('--description', default='Dummy placeholder package',
                         help='Package description')

@@ -19,12 +19,14 @@ pip install quasipkg
 Or install from source using Poetry:
 
 ```bash
-git clone https://github.com/yourusername/quasipkg.git
+git clone https://github.com/dmikushin/quasipkg.git
 cd quasipkg
 poetry install
 ```
 
 ## Usage
+
+### Command-line Interface
 
 ```bash
 # Create a basic dummy package
@@ -53,6 +55,41 @@ quasipkg --help
   --install             Also install the package after building
 ```
 
+### Python API
+
+You can also use `quasipkg` programmatically in your Python scripts:
+
+```python
+import quasipkg
+
+# Create a basic dummy package
+output_path, success = quasipkg.create_package(
+    name="cc",
+    version="1.0",
+    description="Fake cc package",
+    provides="cc"
+)
+
+# Create package with more options
+output_path, success = quasipkg.create_package(
+    name="cmake",
+    version="3.20.0",
+    description="Dummy cmake package",
+    provides="cmake",
+    conflicts="cmake",
+    arch="x86_64",
+    license="MIT",
+    url="https://github.com/dmikushin/archrepo-docker",
+    output_dir="/tmp/packages",
+    install=True
+)
+
+if success:
+    print(f"Package successfully created at {output_path}")
+else:
+    print("Failed to create package")
+```
+
 ## Requirements
 
 - Python 3.6+
@@ -65,7 +102,7 @@ This package includes a test suite to verify its functionality. You can run the 
 ```bash
 # If you've installed with pip
 pip install pytest
-pytest-3
+pytest
 
 # If you're using Poetry
 poetry install
@@ -82,6 +119,7 @@ The tests verify basic functionality including:
 - Proper formatting of package arrays
 - Creation of PKGBUILD files with correct content
 - Package building process (mocked)
+- Python API functionality
 
 If you're contributing to this project, please ensure all tests pass before submitting pull requests.
 
